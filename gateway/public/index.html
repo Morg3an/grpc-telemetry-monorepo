@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>gRPC Telemetry Monorepo | High-Performance Data Pipeline</title>
+  <meta name="description" content="Distributed telemetry metrics processing bridging Node.js API Gateway and Python gRPC service using binary Protocol Buffers.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Header -->
+    <header class="navbar">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">gRPC Telemetry Monorepo</h1>
+          <p class="brand-subtitle">Distributed Binary Pipeline: Node.js Express ➔ Python 3 gRPC</p>
+        </div>
+      </div>
+
+      <div class="status-indicators">
+        <div class="status-pill" id="gateway-status-pill">
+          <span class="status-dot online"></span>
+          <span class="status-label">Gateway: <strong id="gateway-status-text">Online</strong></span>
+        </div>
+        <div class="status-pill" id="cruncher-status-pill">
+          <span class="status-dot" id="cruncher-status-dot"></span>
+          <span class="status-label">Python Cruncher: <strong id="cruncher-status-text">Checking...</strong></span>
+        </div>
+        <button id="btn-refresh-health" class="btn-icon" title="Check cluster health">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Architecture Visualizer Banner -->
+    <section class="pipeline-card">
+      <div class="pipeline-header">
+        <span class="badge">Architecture Flow</span>
+        <h2>End-to-End Inter-Service Communication</h2>
+      </div>
+      <div class="pipeline-nodes">
+        <div class="node-box" id="node-client">
+          <div class="node-tag">Web / REST Client</div>
+          <div class="node-name">JSON Request</div>
+          <div class="node-detail">HTTP / POST :3000</div>
+        </div>
+
+        <div class="pipeline-arrow">
+          <span class="arrow-line"></span>
+          <span class="arrow-label">REST JSON</span>
+        </div>
+
+        <div class="node-box active" id="node-gateway">
+          <div class="node-tag">gateway/</div>
+          <div class="node-name">Node.js TypeScript</div>
+          <div class="node-detail">Express + @grpc/grpc-js</div>
+        </div>
+
+        <div class="pipeline-arrow pulse">
+          <span class="arrow-line"></span>
+          <span class="arrow-label">Protobuf Binary (HTTP/2)</span>
+        </div>
+
+        <div class="node-box active" id="node-cruncher">
+          <div class="node-tag">data-service/</div>
+          <div class="node-name">Python gRPC Server</div>
+          <div class="node-detail">NumPy Vectorized Cruncher :50051</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Workspace Grid -->
+    <main class="main-grid">
+      <!-- Input & Controls Column -->
+      <section class="panel controls-panel">
+        <div class="panel-header">
+          <h3>Telemetry Input Generator</h3>
+          <span class="hint">Select preset or inject custom telemetry points</span>
+        </div>
+
+        <!-- Presets -->
+        <div class="preset-group">
+          <label class="section-label">Quick Presets</label>
+          <div class="preset-buttons">
+            <button class="preset-btn active" data-preset="iot_temp_sensors" id="preset-iot">
+              <span class="preset-icon">🌡️</span>
+              <span class="preset-title">IoT Sensors</span>
+              <span class="preset-count">1,000 pts</span>
+            </button>
+            <button class="preset-btn" data-preset="k8s_cpu_utilization" id="preset-k8s">
+              <span class="preset-icon">⚡</span>
+              <span class="preset-title">K8s CPU Load</span>
+              <span class="preset-count">2,500 pts</span>
+            </button>
+            <button class="preset-btn" data-preset="api_latency_ms" id="preset-latency">
+              <span class="preset-icon">⏱️</span>
+              <span class="preset-title">Edge Latency</span>
+              <span class="preset-count">5,000 pts</span>
+            </button>
+            <button class="preset-btn" data-preset="hft_market_tick_volume" id="preset-hft">
+              <span class="preset-icon">📈</span>
+              <span class="preset-title">HFT 10k Ticks</span>
+              <span class="preset-count">10,000 pts</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Custom Generation -->
+        <div class="custom-gen-box">
+          <label class="section-label">Synthetic Data Synthesis</label>
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="input-count">Point Count</label>
+              <input type="number" id="input-count" value="1500" min="5" max="100000" step="100">
+            </div>
+            <div class="form-group flex-1">
+              <label for="select-distribution">Distribution Model</label>
+              <select id="select-distribution">
+                <option value="normal">Normal (Gaussian)</option>
+                <option value="uniform">Uniform Random</option>
+                <option value="exponential">Exponential (Long Tail)</option>
+                <option value="spikes">Burst Spikes (Anomalies)</option>
+              </select>
+            </div>
+            <div class="form-group align-end">
+              <button class="btn btn-secondary" id="btn-generate-synthetic">Synthesize</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metadata & Metric ID -->
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="input-metric-id">Metric Identifier</label>
+            <input type="text" id="input-metric-id" value="datacenter_sensor_temp" placeholder="e.g. edge_node_latency">
+          </div>
+          <div class="form-group flex-1">
+            <label for="input-host">Host / Region</label>
+            <input type="text" id="input-host" value="us-west-edge-01" placeholder="e.g. rack-a-04">
+          </div>
+        </div>
+
+        <!-- Raw Numbers Input Area -->
+        <div class="form-group">
+          <div class="label-with-meta">
+            <label for="input-raw-points">Telemetry Values Array (<span id="points-count-badge">0</span> points)</label>
+            <span class="sub-hint">Comma separated numbers or JSON array</span>
+          </div>
+          <textarea id="input-raw-points" rows="5" placeholder="12.4, 15.6, 21.0, 18.3, 24.9..."></textarea>
+        </div>
+
+        <!-- Action Button -->
+        <button class="btn btn-primary" id="btn-dispatch-grpc">
+          <span class="btn-spinner" id="btn-spinner"></span>
+          <span class="btn-content">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            Dispatch Binary gRPC Calculation
+          </span>
+        </button>
+      </section>
+
+      <!-- Results & Metrics Display Column -->
+      <section class="panel results-panel">
+        <div class="panel-header">
+          <h3>Calculated Statistical Aggregates</h3>
+          <div class="timing-pill" id="timing-pill">
+            <span id="timing-grpc">gRPC: -- ms</span>
+            <span class="divider">|</span>
+            <span id="timing-python">NumPy: -- ms</span>
+          </div>
+        </div>
+
+        <!-- Metric Stat Cards Grid -->
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-label">Data Points</div>
+            <div class="stat-value" id="val-count">--</div>
+            <div class="stat-sub">Samples Processed</div>
+          </div>
+          <div class="stat-card highlight">
+            <div class="stat-label">Arithmetic Mean (μ)</div>
+            <div class="stat-value" id="val-mean">--</div>
+            <div class="stat-sub">Average Value</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Median (50th %ile)</div>
+            <div class="stat-value" id="val-median">--</div>
+            <div class="stat-sub">Middle Value</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Std Deviation (σ)</div>
+            <div class="stat-value" id="val-std">--</div>
+            <div class="stat-sub">Distribution Spread</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Minimum</div>
+            <div class="stat-value" id="val-min">--</div>
+            <div class="stat-sub">Lowest Observation</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Maximum</div>
+            <div class="stat-value" id="val-max">--</div>
+            <div class="stat-sub">Peak Observation</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Variance (σ²)</div>
+            <div class="stat-value" id="val-variance">--</div>
+            <div class="stat-sub">Squared Deviation</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Sum (Σ)</div>
+            <div class="stat-value" id="val-sum">--</div>
+            <div class="stat-sub">Cumulative Value</div>
+          </div>
+        </div>
+
+        <!-- Percentiles Section -->
+        <div class="percentiles-section">
+          <h4>Percentile Distribution (SLA & Outlier Analysis)</h4>
+          <div class="percentile-bars">
+            <div class="percentile-row">
+              <span class="p-tag">P25</span>
+              <div class="p-bar-bg"><div class="p-bar-fill" id="bar-p25" style="width: 25%"></div></div>
+              <span class="p-val" id="val-p25">--</span>
+            </div>
+            <div class="percentile-row">
+              <span class="p-tag">P50</span>
+              <div class="p-bar-bg"><div class="p-bar-fill" id="bar-p50" style="width: 50%"></div></div>
+              <span class="p-val" id="val-p50">--</span>
+            </div>
+            <div class="percentile-row">
+              <span class="p-tag">P75</span>
+              <div class="p-bar-bg"><div class="p-bar-fill" id="bar-p75" style="width: 75%"></div></div>
+              <span class="p-val" id="val-p75">--</span>
+            </div>
+            <div class="percentile-row">
+              <span class="p-tag">P90</span>
+              <div class="p-bar-bg"><div class="p-bar-fill" id="bar-p90" style="width: 90%"></div></div>
+              <span class="p-val" id="val-p90">--</span>
+            </div>
+            <div class="percentile-row">
+              <span class="p-tag highlight">P95</span>
+              <div class="p-bar-bg"><div class="p-bar-fill highlight" id="bar-p95" style="width: 95%"></div></div>
+              <span class="p-val" id="val-p95">--</span>
+            </div>
+            <div class="percentile-row">
+              <span class="p-tag danger">P99</span>
+              <div class="p-bar-bg"><div class="p-bar-fill danger" id="bar-p99" style="width: 99%"></div></div>
+              <span class="p-val" id="val-p99">--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Protobuf Protocol Efficiency Card -->
+        <div class="efficiency-card">
+          <div class="eff-header">
+            <div>
+              <h4>Protocol Buffers Wire Efficiency</h4>
+              <p>Binary encoding vs. equivalent REST JSON string over the wire</p>
+            </div>
+            <div class="savings-badge" id="savings-badge">--% Saved</div>
+          </div>
+          <div class="efficiency-comparison">
+            <div class="eff-col">
+              <span class="eff-name">REST / JSON Payload</span>
+              <div class="eff-bar-wrap"><div class="eff-bar json" id="eff-bar-json" style="width: 100%"></div></div>
+              <span class="eff-size" id="eff-size-json">-- KB</span>
+            </div>
+            <div class="eff-col">
+              <span class="eff-name">Protobuf Binary Payload</span>
+              <div class="eff-bar-wrap"><div class="eff-bar proto" id="eff-bar-proto" style="width: 40%"></div></div>
+              <span class="eff-size" id="eff-size-proto">-- KB</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Raw Response Toggle -->
+        <details class="json-inspector">
+          <summary>View Complete Gateway JSON Response</summary>
+          <pre><code id="json-viewer">// Responses will appear here after calculation...</code></pre>
+        </details>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span>Repository: <code>grpc-telemetry-monorepo</code></span>
+      <span>•</span>
+      <span>Contract: <code>proto/telemetry.proto</code></span>
+      <span>•</span>
+      <span>Release: <code>gateway-v1.0.0</code> &amp; <code>data-service-v1.1.0</code></span>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
