@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+package telemetry;
+
+// TelemetryService provides high-performance statistical crunching
+// and analysis over telemetry data points using Protocol Buffers.
+service TelemetryService {
+  // Calculate statistical aggregates for an array of telemetry numbers
+  rpc CalculateMetrics (MetricsRequest) returns (MetricsResponse);
+
+  // Check the health and uptime of the telemetry computation service
+  rpc CheckHealth (HealthRequest) returns (HealthResponse);
+}
+
+// Request payload containing raw telemetry numeric values and optional metadata
+message MetricsRequest {
+  // Unique identifier or metric name (e.g., "cpu_usage", "temp_sensor_01")
+  string metric_id = 1;
+
+  // Collection of floating-point numbers to be processed
+  repeated double data_points = 2;
+
+  // Arbitrary contextual key-value metadata (e.g., host, region, unit)
+  map<string, string> metadata = 3;
+
+  // Client-side Unix timestamp in milliseconds
+  int64 timestamp = 4;
+}
+
+// Distribution percentiles for statistical analysis
+message Percentiles {
+  double p25 = 1;
+  double p50 = 2;
+  double p75 = 3;
+  double p90 = 4;
+  double p95 = 5;
+  double p99 = 6;
+}
+
+// Computed statistical aggregates returned by the cruncher
+message MetricsResponse {
+  // Associated metric identifier
+  string metric_id = 1;
+
+  // Total count of data points processed
+  int64 count = 2;
+
+  // Sum of all values
+  double sum = 3;
+
+  // Minimum value observed
+  double min = 4;
+
+  // Maximum value observed
+  double max = 5;
+
+  // Arithmetic mean (average)
+  double mean = 6;
+
+  // Median (50th percentile)
+  double median = 7;
+
+  // Standard deviation (spread of the values)
+  double standard_deviation = 8;
+
+  // Variance (squared standard deviation)
+  double variance = 9;
+
+  // Detailed percentile breakdown
+  Percentiles percentiles = 10;
+
+  // Execution time in milliseconds inside the data cruncher
+  double processing_time_ms = 11;
+
+  // Server response Unix timestamp in milliseconds
+  int64 timestamp = 12;
+
+  // Echoed/enriched metadata
+  map<string, string> metadata = 13;
+}
+
+// Health check request
+message HealthRequest {
+  string client_name = 1;
+}
+
+// Health check response
+message HealthResponse {
+  enum Status {
+    UNKNOWN = 0;
+    HEALTHY = 1;
+    DEGRADED = 2;
+  }
+  Status status = 1;
+  string service_name = 2;
+  string version = 3;
+  int64 uptime_seconds = 4;
+}
