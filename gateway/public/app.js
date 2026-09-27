@@ -14,8 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const cruncherStatusDot = document.getElementById('cruncher-status-dot');
   const cruncherStatusText = document.getElementById('cruncher-status-text');
 
-  // Preset buttons
-  const presetButtons = document.querySelectorAll('.preset-btn');
+  // Channel buttons
+  const channelButtons = document.querySelectorAll('.channel-btn');
 
   // Stats elements
   const valCount = document.getElementById('val-count');
@@ -49,17 +49,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const effBarProto = document.getElementById('eff-bar-proto');
   const jsonViewer = document.getElementById('json-viewer');
 
+  // Canvas
+  const canvas = document.getElementById('histogram-canvas');
+  const axisMin = document.getElementById('axis-min');
+  const axisMean = document.getElementById('axis-mean');
+  const axisMax = document.getElementById('axis-max');
+
   let cachedDatasets = {};
+  let currentPoints = [];
 
   // Update count badge when typing
   function updateCountBadge() {
     const raw = rawPointsInput.value.trim();
     if (!raw) {
       pointsCountBadge.textContent = '0';
+      currentPoints = [];
+      drawHistogram([]);
       return;
     }
-    const points = parsePoints(raw);
-    pointsCountBadge.textContent = points.length.toLocaleString();
+    currentPoints = parsePoints(raw);
+    pointsCountBadge.textContent = currentPoints.length.toLocaleString();
+    drawHistogram(currentPoints);
   }
 
   rawPointsInput.addEventListener('input', updateCountBadge);
@@ -79,6 +89,97 @@ document.addEventListener('DOMContentLoaded', () => {
       .filter(n => !isNaN(n));
   }
 
+  // Draw technical histogram on HTML5 Canvas
+  function drawHistogram(points, meanVal) {
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+
+    ctx.clearRect(0, 0, width, height);
+
+    // Draw background gridlines
+    ctx.strokeStyle = '#18202c';
+    ctx.lineWidth = 1;
+    for (let y = 20; y < height; y += 30) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+    }
+
+    if (!points || points.length === 0) {
+      ctx.fillStyle = '#475569';
+      ctx.font = '11px "JetBrains Mono", monospace';
+      ctx.fillText('NO DATA IN BUFFER', width / 2 - 50, height / 2);
+      return;
+    }
+
+    let min = Infinity;
+    let max = -Infinity;
+    let sum = 0;
+    for (let i = 0; i < points.length; i++) {
+      const v = points[i];
+      if (v < min) min = v;
+      if (v > max) max = v;
+      sum += v;
+    }
+
+    const mean = meanVal !== undefined ? meanVal : sum / points.length;
+
+    if (axisMin) axisMin.textContent = `MIN: ${min.toFixed(2)}`;
+    if (axisMean) axisMean.textContent = `μ: ${mean.toFixed(2)}`;
+    if (axisMax) axisMax.textContent = `MAX: ${max.toFixed(2)}`;
+
+    const numBuckets = 28;
+    const buckets = new Array(numBuckets).fill(0);
+    const range = (max - min) || 1;
+
+    for (let i = 0; i < points.length; i++) {
+      const idx = Math.min(
+        numBuckets - 1,
+        Math.floor(((points[i] - min) / range) * numBuckets)
+      );
+      buckets[idx]++;
+    }
+
+    const maxCount = Math.max(...buckets, 1);
+    const barWidth = width / numBuckets;
+    const padding = 2;
+
+    for (let b = 0; b < numBuckets; b++) {
+      const barHeight = (buckets[b] / maxCount) * (height - 20);
+      const x = b * barWidth + padding;
+      const y = height - barHeight - 2;
+
+      // Technical styling for bars
+      ctx.fillStyle = '#223249';
+      ctx.fillRect(x, y, barWidth - padding * 2, barHeight);
+
+      // Top edge highlight
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(x, y, barWidth - padding * 2, 2);
+    }
+
+    // Draw Mean line indicator
+    if (range > 0) {
+      const meanX = ((mean - min) / range) * width;
+      ctx.strokeStyle = '#f59e0b';
+      ctx.setLineDash([4, 3]);
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(meanX, 0);
+      ctx.lineTo(meanX, height);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Mean indicator label
+      ctx.fillStyle = '#f59e0b';
+      ctx.font = '10px "JetBrains Mono", monospace';
+      ctx.fillText('μ', Math.min(width - 15, Math.max(5, meanX + 3)), 14);
+    }
+  }
+
   // Fetch sample presets
   async function loadPresets() {
     try {
@@ -88,12 +189,11 @@ document.addEventListener('DOMContentLoaded', () => {
         data.datasets.forEach(ds => {
           cachedDatasets[ds.id] = ds;
         });
-        // Select first preset by default
+        // Select first channel preset by default
         applyPreset('iot_temp_sensors');
       }
     } catch (err) {
       console.warn('Could not load sample datasets:', err);
-      // Fallback synthetic data
       generateSyntheticData();
     }
   }
@@ -112,10 +212,24 @@ document.addEventListener('DOMContentLoaded', () => {
     updateCountBadge();
   }
 
-  presetButtons.forEach(btn => {
+  channelButtons.forEach(btn => {
     btn.addEventListener('click', () => {
-      presetButtons.forEach(b => b.classList.remove('active'));
+      channelButtons.forEach(b => {
+        b.classList.remove('active');
+        const st = b.querySelector('.ch-status');
+        if (st) {
+          st.classList.remove('active');
+          st.textContent = 'READY';
+        }
+      });
+
       btn.classList.add('active');
+      const st = btn.querySelector('.ch-status');
+      if (st) {
+        st.classList.add('active');
+        st.textContent = 'ACTIVE';
+      }
+
       const presetId = btn.getAttribute('data-preset');
       applyPreset(presetId);
     });
@@ -154,20 +268,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Check Health
   async function checkHealth() {
-    cruncherStatusText.textContent = 'Probing...';
+    cruncherStatusText.textContent = 'POLLING';
     try {
       const res = await fetch('/api/health');
       const data = await res.json();
       if (data.dataService && data.dataService.status === 'UP') {
-        cruncherStatusDot.className = 'status-dot online';
-        cruncherStatusText.textContent = `Online (v${data.dataService.version})`;
+        cruncherStatusDot.className = 'led-dot online';
+        cruncherStatusText.textContent = `ONLINE (v${data.dataService.version})`;
       } else {
-        cruncherStatusDot.className = 'status-dot offline';
-        cruncherStatusText.textContent = 'Degraded';
+        cruncherStatusDot.className = 'led-dot offline';
+        cruncherStatusText.textContent = 'DEGRADED';
       }
     } catch (_) {
-      cruncherStatusDot.className = 'status-dot offline';
-      cruncherStatusText.textContent = 'Offline';
+      cruncherStatusDot.className = 'led-dot offline';
+      cruncherStatusText.textContent = 'OFFLINE';
     }
   }
 
@@ -177,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function dispatchCalculation() {
     const points = parsePoints(rawPointsInput.value);
     if (points.length === 0) {
-      alert('Please provide at least one telemetry number.');
+      alert('SIGNAL BUFFER EMPTY: Provide at least one numeric telemetry point.');
       return;
     }
 
@@ -204,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
       jsonViewer.textContent = JSON.stringify(json, null, 2);
 
       if (!json.success) {
-        alert(`Calculation failed: ${json.error || 'Unknown error'}`);
+        alert(`RPC Execution Failed: ${json.error || 'Unknown error'}`);
         return;
       }
 
@@ -232,21 +346,22 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Update timing
-      timingGrpc.textContent = `gRPC Roundtrip: ${perf.grpcRoundtripMs}ms`;
-      timingPython.textContent = `Python NumPy: ${m.cruncherProcessingTimeMs.toFixed(2)}ms`;
+      timingGrpc.textContent = `${perf.grpcRoundtripMs.toFixed(2)} ms`;
+      timingPython.textContent = `${m.cruncherProcessingTimeMs.toFixed(2)} ms`;
 
-      // Update efficiency
+      // Update wire efficiency
       if (perf.protocolEfficiency) {
         const eff = perf.protocolEfficiency;
-        savingsBadge.textContent = `${eff.savingsPercent} Saved`;
-        const jsonKb = (eff.jsonBytes / 1024).toFixed(1);
-        const protoKb = (eff.protoBytes / 1024).toFixed(1);
-        effSizeJson.textContent = `${jsonKb} KB`;
-        effSizeProto.textContent = `${protoKb} KB`;
+        savingsBadge.textContent = `${eff.savingsPercent} BANDWIDTH_SAVED`;
+        effSizeJson.textContent = `${eff.jsonBytes.toLocaleString()} BYTES`;
+        effSizeProto.textContent = `${eff.protoBytes.toLocaleString()} BYTES`;
 
         const ratio = Math.max(10, Math.min(100, Math.round((eff.protoBytes / eff.jsonBytes) * 100)));
         effBarProto.style.width = `${ratio}%`;
       }
+
+      // Re-draw histogram with computed mean
+      drawHistogram(points, m.mean);
     } catch (err) {
       alert(`Network error connecting to Gateway: ${err.message}`);
     } finally {
@@ -257,7 +372,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnDispatch.addEventListener('click', dispatchCalculation);
 
+  // Keyboard shortcut: Ctrl+Enter or Cmd+Enter to dispatch
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      dispatchCalculation();
+    }
+  });
+
+  // Window resize re-draws canvas
+  window.addEventListener('resize', () => {
+    if (canvas) {
+      canvas.width = canvas.parentElement.clientWidth;
+      drawHistogram(currentPoints);
+    }
+  });
+
   // Initialize
+  if (canvas) {
+    canvas.width = canvas.parentElement.clientWidth || 500;
+  }
   checkHealth();
   loadPresets();
 });

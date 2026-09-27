@@ -3,307 +3,406 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>gRPC Telemetry Monorepo | High-Performance Data Pipeline</title>
-  <meta name="description" content="Distributed telemetry metrics processing bridging Node.js API Gateway and Python gRPC service using binary Protocol Buffers.">
+  <title>TELEMETRY UNIT // gRPC Monorepo Console</title>
+  <meta name="description" content="Technical-industrial telemetry computation console bridging Node.js REST Gateway and Python gRPC service via Protocol Buffers.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="app-container">
-    <!-- Top Header -->
-    <header class="navbar">
-      <div class="brand">
-        <div class="brand-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-            <polyline points="2 17 12 22 22 17"></polyline>
-            <polyline points="2 12 12 17 22 12"></polyline>
-          </svg>
+  <div class="console-wrapper">
+    <!-- Top Instrumentation Bar -->
+    <header class="console-header">
+      <div class="header-left">
+        <div class="system-ident">
+          <span class="system-tag">SYS-ID</span>
+          <span class="system-name">TELEMETRY_CONTROL_UNIT // NODE-01</span>
         </div>
-        <div>
-          <h1 class="brand-title">gRPC Telemetry Monorepo</h1>
-          <p class="brand-subtitle">Distributed Binary Pipeline: Node.js Express ➔ Python 3 gRPC</p>
+        <div class="header-divider"></div>
+        <div class="system-specs">
+          <span class="spec-item"><span class="spec-label">PROTO:</span> PROTO3/HTTP2</span>
+          <span class="spec-item"><span class="spec-label">UPSTREAM:</span> 127.0.0.1:50051</span>
         </div>
       </div>
 
-      <div class="status-indicators">
-        <div class="status-pill" id="gateway-status-pill">
-          <span class="status-dot online"></span>
-          <span class="status-label">Gateway: <strong id="gateway-status-text">Online</strong></span>
+      <div class="header-right">
+        <div class="node-status-group">
+          <div class="node-indicator" id="gateway-indicator">
+            <span class="led-dot online"></span>
+            <span class="node-name">GATEWAY:3000</span>
+            <span class="node-state" id="gateway-status-text">ONLINE</span>
+          </div>
+          <div class="node-indicator" id="cruncher-indicator">
+            <span class="led-dot" id="cruncher-status-dot"></span>
+            <span class="node-name">CRUNCHER:50051</span>
+            <span class="node-state" id="cruncher-status-text">CHECKING</span>
+          </div>
         </div>
-        <div class="status-pill" id="cruncher-status-pill">
-          <span class="status-dot" id="cruncher-status-dot"></span>
-          <span class="status-label">Python Cruncher: <strong id="cruncher-status-text">Checking...</strong></span>
-        </div>
-        <button id="btn-refresh-health" class="btn-icon" title="Check cluster health">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+
+        <button id="btn-refresh-health" class="tech-btn icon-btn" title="Poll cluster health status">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
           </svg>
+          <span>SYNC</span>
         </button>
       </div>
     </header>
 
-    <!-- Architecture Visualizer Banner -->
-    <section class="pipeline-card">
-      <div class="pipeline-header">
-        <span class="badge">Architecture Flow</span>
-        <h2>End-to-End Inter-Service Communication</h2>
-      </div>
-      <div class="pipeline-nodes">
-        <div class="node-box" id="node-client">
-          <div class="node-tag">Web / REST Client</div>
-          <div class="node-name">JSON Request</div>
-          <div class="node-detail">HTTP / POST :3000</div>
+    <!-- Architecture Topology Bar -->
+    <section class="topology-strip">
+      <div class="topology-label">PIPELINE TOPOLOGY</div>
+      <div class="topology-flow">
+        <div class="topology-node">
+          <span class="sub">SOURCE</span>
+          <span class="main">CLIENT REST</span>
+          <span class="code">HTTP/1.1 JSON</span>
         </div>
-
-        <div class="pipeline-arrow">
-          <span class="arrow-line"></span>
-          <span class="arrow-label">REST JSON</span>
+        <div class="topology-connector">
+          <span class="line"></span>
+          <span class="flow-tag">POST /api/metrics</span>
         </div>
-
-        <div class="node-box active" id="node-gateway">
-          <div class="node-tag">gateway/</div>
-          <div class="node-name">Node.js TypeScript</div>
-          <div class="node-detail">Express + @grpc/grpc-js</div>
+        <div class="topology-node highlight">
+          <span class="sub">GATEWAY</span>
+          <span class="main">NODE.JS / EXPRESS</span>
+          <span class="code">PROTOBUF ENCODER</span>
         </div>
-
-        <div class="pipeline-arrow pulse">
-          <span class="arrow-line"></span>
-          <span class="arrow-label">Protobuf Binary (HTTP/2)</span>
+        <div class="topology-connector active">
+          <span class="line"></span>
+          <span class="flow-tag">HTTP/2 BINARY WIRE</span>
         </div>
-
-        <div class="node-box active" id="node-cruncher">
-          <div class="node-tag">data-service/</div>
-          <div class="node-name">Python gRPC Server</div>
-          <div class="node-detail">NumPy Vectorized Cruncher :50051</div>
+        <div class="topology-node highlight">
+          <span class="sub">SERVICE</span>
+          <span class="main">PYTHON gRPC CRUNCHER</span>
+          <span class="code">NUMPY VECTORIZED</span>
         </div>
       </div>
     </section>
 
-    <!-- Main Workspace Grid -->
-    <main class="main-grid">
-      <!-- Input & Controls Column -->
-      <section class="panel controls-panel">
-        <div class="panel-header">
-          <h3>Telemetry Input Generator</h3>
-          <span class="hint">Select preset or inject custom telemetry points</span>
+    <!-- Console Main Workspace -->
+    <main class="console-grid">
+      <!-- Left Panel: Signal Generator & Ingest Parameters -->
+      <aside class="console-panel control-sidebar">
+        <div class="panel-heading">
+          <span class="heading-title">INGEST_CONTROL</span>
+          <span class="heading-id">[CH-CFG]</span>
         </div>
 
-        <!-- Presets -->
-        <div class="preset-group">
-          <label class="section-label">Quick Presets</label>
-          <div class="preset-buttons">
-            <button class="preset-btn active" data-preset="iot_temp_sensors" id="preset-iot">
-              <span class="preset-icon">🌡️</span>
-              <span class="preset-title">IoT Sensors</span>
-              <span class="preset-count">1,000 pts</span>
+        <!-- Channel Presets -->
+        <div class="control-section">
+          <div class="section-title">TELEMETRY CHANNELS</div>
+          <div class="channel-matrix">
+            <button class="channel-btn active" data-preset="iot_temp_sensors" id="preset-iot">
+              <span class="ch-idx">01</span>
+              <div class="ch-details">
+                <span class="ch-name">THERMAL_ARRAY_DC2</span>
+                <span class="ch-meta">1,000 SAMPLES // 23.5°C REF</span>
+              </div>
+              <span class="ch-status active">ACTIVE</span>
             </button>
-            <button class="preset-btn" data-preset="k8s_cpu_utilization" id="preset-k8s">
-              <span class="preset-icon">⚡</span>
-              <span class="preset-title">K8s CPU Load</span>
-              <span class="preset-count">2,500 pts</span>
+
+            <button class="channel-btn" data-preset="k8s_cpu_utilization" id="preset-k8s">
+              <span class="ch-idx">02</span>
+              <div class="ch-details">
+                <span class="ch-name">K8S_CPU_BURST</span>
+                <span class="ch-meta">2,500 SAMPLES // % CORE</span>
+              </div>
+              <span class="ch-status">READY</span>
             </button>
-            <button class="preset-btn" data-preset="api_latency_ms" id="preset-latency">
-              <span class="preset-icon">⏱️</span>
-              <span class="preset-title">Edge Latency</span>
-              <span class="preset-count">5,000 pts</span>
+
+            <button class="channel-btn" data-preset="api_latency_ms" id="preset-latency">
+              <span class="ch-idx">03</span>
+              <div class="ch-details">
+                <span class="ch-name">EDGE_LATENCY_LOG</span>
+                <span class="ch-meta">5,000 SAMPLES // MS LOG-N</span>
+              </div>
+              <span class="ch-status">READY</span>
             </button>
-            <button class="preset-btn" data-preset="hft_market_tick_volume" id="preset-hft">
-              <span class="preset-icon">📈</span>
-              <span class="preset-title">HFT 10k Ticks</span>
-              <span class="preset-count">10,000 pts</span>
+
+            <button class="channel-btn" data-preset="hft_market_tick_volume" id="preset-hft">
+              <span class="ch-idx">04</span>
+              <div class="ch-details">
+                <span class="ch-name">HFT_ORDERBOOK_TICKS</span>
+                <span class="ch-meta">10,000 SAMPLES // VOL</span>
+              </div>
+              <span class="ch-status">READY</span>
             </button>
           </div>
         </div>
 
-        <!-- Custom Generation -->
-        <div class="custom-gen-box">
-          <label class="section-label">Synthetic Data Synthesis</label>
-          <div class="form-row">
-            <div class="form-group flex-1">
-              <label for="input-count">Point Count</label>
-              <input type="number" id="input-count" value="1500" min="5" max="100000" step="100">
+        <!-- Signal Synthesizer -->
+        <div class="control-section">
+          <div class="section-title">SIGNAL SYNTHESIZER</div>
+          <div class="tech-form-row">
+            <div class="tech-field flex-1">
+              <label for="input-count">SAMPLE_COUNT</label>
+              <input type="number" id="input-count" value="1500" min="5" max="100000" step="500">
             </div>
-            <div class="form-group flex-1">
-              <label for="select-distribution">Distribution Model</label>
+            <div class="tech-field flex-1">
+              <label for="select-distribution">DISTRIBUTION</label>
               <select id="select-distribution">
-                <option value="normal">Normal (Gaussian)</option>
-                <option value="uniform">Uniform Random</option>
-                <option value="exponential">Exponential (Long Tail)</option>
-                <option value="spikes">Burst Spikes (Anomalies)</option>
+                <option value="normal">GAUSSIAN_NORMAL</option>
+                <option value="uniform">UNIFORM_RANDOM</option>
+                <option value="exponential">EXPONENTIAL_DECAY</option>
+                <option value="spikes">ANOMALY_BURST</option>
               </select>
             </div>
-            <div class="form-group align-end">
-              <button class="btn btn-secondary" id="btn-generate-synthetic">Synthesize</button>
+          </div>
+          <button class="tech-btn secondary-btn" id="btn-generate-synthetic">
+            SYNTHESIZE BUFFER
+          </button>
+        </div>
+
+        <!-- Payload Descriptors -->
+        <div class="control-section">
+          <div class="section-title">DESCRIPTOR METADATA</div>
+          <div class="tech-form-row">
+            <div class="tech-field flex-1">
+              <label for="input-metric-id">METRIC_IDENTIFIER</label>
+              <input type="text" id="input-metric-id" value="datacenter_sensor_temp">
+            </div>
+            <div class="tech-field flex-1">
+              <label for="input-host">NODE_STATION</label>
+              <input type="text" id="input-host" value="rack-dc2-blade4">
             </div>
           </div>
         </div>
 
-        <!-- Metadata & Metric ID -->
-        <div class="form-row">
-          <div class="form-group flex-1">
-            <label for="input-metric-id">Metric Identifier</label>
-            <input type="text" id="input-metric-id" value="datacenter_sensor_temp" placeholder="e.g. edge_node_latency">
+        <!-- Raw Numeric Array Buffer -->
+        <div class="control-section flex-fill">
+          <div class="section-header-split">
+            <div class="section-title">SIGNAL BUFFER</div>
+            <div class="buffer-count">[ <span id="points-count-badge">0</span> PTS ]</div>
           </div>
-          <div class="form-group flex-1">
-            <label for="input-host">Host / Region</label>
-            <input type="text" id="input-host" value="us-west-edge-01" placeholder="e.g. rack-a-04">
-          </div>
+          <textarea id="input-raw-points" spellcheck="false" placeholder="Enter numeric telemetry values (e.g. 10.2, 14.8, 22.1)..."></textarea>
         </div>
 
-        <!-- Raw Numbers Input Area -->
-        <div class="form-group">
-          <div class="label-with-meta">
-            <label for="input-raw-points">Telemetry Values Array (<span id="points-count-badge">0</span> points)</label>
-            <span class="sub-hint">Comma separated numbers or JSON array</span>
-          </div>
-          <textarea id="input-raw-points" rows="5" placeholder="12.4, 15.6, 21.0, 18.3, 24.9..."></textarea>
+        <!-- Primary Execution Button -->
+        <div class="execute-action-box">
+          <button class="tech-btn primary-btn" id="btn-dispatch-grpc">
+            <span class="btn-spinner" id="btn-spinner"></span>
+            <span class="btn-text">TRANSMIT &amp; CRUNCH // gRPC</span>
+          </button>
         </div>
+      </aside>
 
-        <!-- Action Button -->
-        <button class="btn btn-primary" id="btn-dispatch-grpc">
-          <span class="btn-spinner" id="btn-spinner"></span>
-          <span class="btn-content">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-            Dispatch Binary gRPC Calculation
-          </span>
-        </button>
-      </section>
+      <!-- Right Panel: Telemetry Instrument Display -->
+      <section class="console-panel readout-stage">
+        <!-- Top Readout Bar -->
+        <div class="readout-header">
+          <div class="readout-title-block">
+            <span class="readout-category">METRICS INSTRUMENTATION</span>
+            <span class="readout-subtitle">HIGH-PRECISION STATISTICAL ENGINE (NUMPY BACKED)</span>
+          </div>
 
-      <!-- Results & Metrics Display Column -->
-      <section class="panel results-panel">
-        <div class="panel-header">
-          <h3>Calculated Statistical Aggregates</h3>
-          <div class="timing-pill" id="timing-pill">
-            <span id="timing-grpc">gRPC: -- ms</span>
-            <span class="divider">|</span>
-            <span id="timing-python">NumPy: -- ms</span>
-          </div>
-        </div>
-
-        <!-- Metric Stat Cards Grid -->
-        <div class="stat-grid">
-          <div class="stat-card">
-            <div class="stat-label">Data Points</div>
-            <div class="stat-value" id="val-count">--</div>
-            <div class="stat-sub">Samples Processed</div>
-          </div>
-          <div class="stat-card highlight">
-            <div class="stat-label">Arithmetic Mean (μ)</div>
-            <div class="stat-value" id="val-mean">--</div>
-            <div class="stat-sub">Average Value</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Median (50th %ile)</div>
-            <div class="stat-value" id="val-median">--</div>
-            <div class="stat-sub">Middle Value</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Std Deviation (σ)</div>
-            <div class="stat-value" id="val-std">--</div>
-            <div class="stat-sub">Distribution Spread</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Minimum</div>
-            <div class="stat-value" id="val-min">--</div>
-            <div class="stat-sub">Lowest Observation</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Maximum</div>
-            <div class="stat-value" id="val-max">--</div>
-            <div class="stat-sub">Peak Observation</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Variance (σ²)</div>
-            <div class="stat-value" id="val-variance">--</div>
-            <div class="stat-sub">Squared Deviation</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Total Sum (Σ)</div>
-            <div class="stat-value" id="val-sum">--</div>
-            <div class="stat-sub">Cumulative Value</div>
-          </div>
-        </div>
-
-        <!-- Percentiles Section -->
-        <div class="percentiles-section">
-          <h4>Percentile Distribution (SLA & Outlier Analysis)</h4>
-          <div class="percentile-bars">
-            <div class="percentile-row">
-              <span class="p-tag">P25</span>
-              <div class="p-bar-bg"><div class="p-bar-fill" id="bar-p25" style="width: 25%"></div></div>
-              <span class="p-val" id="val-p25">--</span>
+          <div class="telemetry-timing-tags">
+            <div class="tag-cell">
+              <span class="tag-k">gRPC_RTT:</span>
+              <span class="tag-v" id="timing-grpc">-- ms</span>
             </div>
-            <div class="percentile-row">
-              <span class="p-tag">P50</span>
-              <div class="p-bar-bg"><div class="p-bar-fill" id="bar-p50" style="width: 50%"></div></div>
-              <span class="p-val" id="val-p50">--</span>
-            </div>
-            <div class="percentile-row">
-              <span class="p-tag">P75</span>
-              <div class="p-bar-bg"><div class="p-bar-fill" id="bar-p75" style="width: 75%"></div></div>
-              <span class="p-val" id="val-p75">--</span>
-            </div>
-            <div class="percentile-row">
-              <span class="p-tag">P90</span>
-              <div class="p-bar-bg"><div class="p-bar-fill" id="bar-p90" style="width: 90%"></div></div>
-              <span class="p-val" id="val-p90">--</span>
-            </div>
-            <div class="percentile-row">
-              <span class="p-tag highlight">P95</span>
-              <div class="p-bar-bg"><div class="p-bar-fill highlight" id="bar-p95" style="width: 95%"></div></div>
-              <span class="p-val" id="val-p95">--</span>
-            </div>
-            <div class="percentile-row">
-              <span class="p-tag danger">P99</span>
-              <div class="p-bar-bg"><div class="p-bar-fill danger" id="bar-p99" style="width: 99%"></div></div>
-              <span class="p-val" id="val-p99">--</span>
+            <div class="tag-cell">
+              <span class="tag-k">NUMPY_COMPUTE:</span>
+              <span class="tag-v" id="timing-python">-- ms</span>
             </div>
           </div>
         </div>
 
-        <!-- Protobuf Protocol Efficiency Card -->
-        <div class="efficiency-card">
-          <div class="eff-header">
-            <div>
-              <h4>Protocol Buffers Wire Efficiency</h4>
-              <p>Binary encoding vs. equivalent REST JSON string over the wire</p>
+        <!-- High-Density KPI Metric Readout Grid -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-label">SAMPLE_SIZE [N]</span>
+              <span class="kpi-unit">PTS</span>
             </div>
-            <div class="savings-badge" id="savings-badge">--% Saved</div>
+            <div class="kpi-number" id="val-count">--</div>
+            <div class="kpi-footer">TOTAL OBSERVED</div>
           </div>
-          <div class="efficiency-comparison">
-            <div class="eff-col">
-              <span class="eff-name">REST / JSON Payload</span>
-              <div class="eff-bar-wrap"><div class="eff-bar json" id="eff-bar-json" style="width: 100%"></div></div>
-              <span class="eff-size" id="eff-size-json">-- KB</span>
+
+          <div class="kpi-card highlight">
+            <div class="kpi-header">
+              <span class="kpi-label">ARITHMETIC_MEAN [μ]</span>
+              <span class="kpi-unit">AVG</span>
             </div>
-            <div class="eff-col">
-              <span class="eff-name">Protobuf Binary Payload</span>
-              <div class="eff-bar-wrap"><div class="eff-bar proto" id="eff-bar-proto" style="width: 40%"></div></div>
-              <span class="eff-size" id="eff-size-proto">-- KB</span>
+            <div class="kpi-number" id="val-mean">--</div>
+            <div class="kpi-footer">CENTRAL TENDENCY</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-label">MEDIAN_VALUE [M]</span>
+              <span class="kpi-unit">50%</span>
+            </div>
+            <div class="kpi-number" id="val-median">--</div>
+            <div class="kpi-footer">50TH PERCENTILE</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-label">STD_DEVIATION [σ]</span>
+              <span class="kpi-unit">DISP</span>
+            </div>
+            <div class="kpi-number" id="val-std">--</div>
+            <div class="kpi-footer">SIGNAL DISPERSION</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-label">BOUNDS [MIN / MAX]</span>
+              <span class="kpi-unit">RNG</span>
+            </div>
+            <div class="kpi-number split-num">
+              <span id="val-min">--</span>
+              <span class="sep">/</span>
+              <span id="val-max">--</span>
+            </div>
+            <div class="kpi-footer">DYNAMIC RANGE</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-label">VARIANCE [σ²]</span>
+              <span class="kpi-unit">VAR</span>
+            </div>
+            <div class="kpi-number" id="val-variance">--</div>
+            <div class="kpi-footer">SQUARED DEVIATION</div>
+          </div>
+        </div>
+
+        <!-- Center Stage: Distribution Canvas & Percentile Table -->
+        <div class="mid-stage-grid">
+          <!-- Live Distribution Histogram Canvas -->
+          <div class="sub-panel distribution-box">
+            <div class="sub-panel-header">
+              <span class="sub-title">SIGNAL_DISTRIBUTION_HISTOGRAM</span>
+              <span class="sub-code">BUCKETS: 24 // DENSITY PLOT</span>
+            </div>
+            <div class="canvas-wrap">
+              <canvas id="histogram-canvas" width="600" height="150"></canvas>
+            </div>
+            <div class="canvas-axis">
+              <span id="axis-min">MIN: --</span>
+              <span id="axis-mean">μ: --</span>
+              <span id="axis-max">MAX: --</span>
+            </div>
+          </div>
+
+          <!-- Percentile SLA Ladder -->
+          <div class="sub-panel percentiles-box">
+            <div class="sub-panel-header">
+              <span class="sub-title">PERCENTILE_SLA_LADDER</span>
+              <span class="sub-code">OUTLIER &amp; TAIL ANALYSIS</span>
+            </div>
+
+            <table class="percentile-table">
+              <thead>
+                <tr>
+                  <th>RANK</th>
+                  <th>RATIO</th>
+                  <th>VALUE</th>
+                  <th>BANDWIDTH</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="rank-cell">P25</td>
+                  <td class="ratio-cell">0.25</td>
+                  <td class="val-cell" id="val-p25">--</td>
+                  <td class="bar-cell"><div class="mini-bar-bg"><div class="mini-bar-fill" id="bar-p25" style="width: 25%"></div></div></td>
+                </tr>
+                <tr>
+                  <td class="rank-cell">P50</td>
+                  <td class="ratio-cell">0.50</td>
+                  <td class="val-cell" id="val-p50">--</td>
+                  <td class="bar-cell"><div class="mini-bar-bg"><div class="mini-bar-fill" id="bar-p50" style="width: 50%"></div></div></td>
+                </tr>
+                <tr>
+                  <td class="rank-cell">P75</td>
+                  <td class="ratio-cell">0.75</td>
+                  <td class="val-cell" id="val-p75">--</td>
+                  <td class="bar-cell"><div class="mini-bar-bg"><div class="mini-bar-fill" id="bar-p75" style="width: 75%"></div></div></td>
+                </tr>
+                <tr>
+                  <td class="rank-cell">P90</td>
+                  <td class="ratio-cell">0.90</td>
+                  <td class="val-cell" id="val-p90">--</td>
+                  <td class="bar-cell"><div class="mini-bar-bg"><div class="mini-bar-fill" id="bar-p90" style="width: 90%"></div></div></td>
+                </tr>
+                <tr>
+                  <td class="rank-cell warn">P95</td>
+                  <td class="ratio-cell">0.95</td>
+                  <td class="val-cell" id="val-p95">--</td>
+                  <td class="bar-cell"><div class="mini-bar-bg"><div class="mini-bar-fill warn" id="bar-p95" style="width: 95%"></div></div></td>
+                </tr>
+                <tr>
+                  <td class="rank-cell alert">P99</td>
+                  <td class="ratio-cell">0.99</td>
+                  <td class="val-cell" id="val-p99">--</td>
+                  <td class="bar-cell"><div class="mini-bar-bg"><div class="mini-bar-fill alert" id="bar-p99" style="width: 99%"></div></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Wire Protocol Benchmark & Efficiency Telemetry -->
+        <div class="sub-panel wire-efficiency-box">
+          <div class="sub-panel-header">
+            <div class="title-with-tag">
+              <span class="sub-title">PROTOCOL_BUFFERS_WIRE_BENCHMARK</span>
+              <span class="tech-badge">BINARY_EFFICIENCY</span>
+            </div>
+            <div class="savings-metric" id="savings-badge">--% BANDWIDTH_SAVED</div>
+          </div>
+
+          <div class="wire-meter-grid">
+            <div class="meter-block">
+              <div class="meter-labels">
+                <span class="format-title">REST / JSON TEXT PAYLOAD</span>
+                <span class="format-bytes" id="eff-size-json">-- BYTES</span>
+              </div>
+              <div class="meter-track">
+                <div class="meter-fill json-fill" id="eff-bar-json" style="width: 100%"></div>
+              </div>
+              <span class="meter-meta">STRING SERIALIZED // UNPACKED DOUBLES</span>
+            </div>
+
+            <div class="meter-block">
+              <div class="meter-labels">
+                <span class="format-title">PROTOBUF BINARY ENCODING</span>
+                <span class="format-bytes" id="eff-size-proto">-- BYTES</span>
+              </div>
+              <div class="meter-track">
+                <div class="meter-fill proto-fill" id="eff-bar-proto" style="width: 40%"></div>
+              </div>
+              <span class="meter-meta">PACKED WIRE FORMAT // IEEE-754 BINARY STREAM</span>
             </div>
           </div>
         </div>
 
-        <!-- Raw Response Toggle -->
-        <details class="json-inspector">
-          <summary>View Complete Gateway JSON Response</summary>
-          <pre><code id="json-viewer">// Responses will appear here after calculation...</code></pre>
-        </details>
+        <!-- Raw Wire Frame Inspector -->
+        <div class="sub-panel inspector-box">
+          <details class="tech-details" open>
+            <summary>
+              <span class="summary-title">RAW_WIRE_FRAME_PAYLOAD</span>
+              <span class="summary-hint">CLICK TO COLLAPSE</span>
+            </summary>
+            <pre class="tech-pre"><code id="json-viewer">// Dispatch an RPC request to inspect wire frame response...</code></pre>
+          </details>
+        </div>
       </section>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <span>Repository: <code>grpc-telemetry-monorepo</code></span>
-      <span>•</span>
-      <span>Contract: <code>proto/telemetry.proto</code></span>
-      <span>•</span>
-      <span>Release: <code>gateway-v1.0.0</code> &amp; <code>data-service-v1.1.0</code></span>
+    <!-- Bottom Status Strip -->
+    <footer class="console-footer">
+      <div class="footer-item"><span class="f-label">REPO:</span> grpc-telemetry-monorepo</div>
+      <div class="footer-divider">|</div>
+      <div class="footer-item"><span class="f-label">CONTRACT:</span> proto/telemetry.proto</div>
+      <div class="footer-divider">|</div>
+      <div class="footer-item"><span class="f-label">SERVICES:</span> gateway-v1.0.0 [TS] // data-service-v1.1.0 [PY3]</div>
+      <div class="footer-divider">|</div>
+      <div class="footer-item"><span class="f-label">TOTAL_ACCUMULATED_SUM:</span> <span id="val-sum">--</span></div>
     </footer>
   </div>
 
