@@ -114,8 +114,13 @@ apiRouter.get('/health', async (_req: Request, res: Response) => {
 
   try {
     const grpcHealth = await callCheckHealth('node-gateway-health-check');
+    const isUp =
+      grpcHealth.status === 1 ||
+      (grpcHealth.status as any) === 'HEALTHY' ||
+      (grpcHealth.status as any) === 'SERVING';
+
     healthData.dataService = {
-      status: grpcHealth.status === 1 ? 'UP' : 'DEGRADED',
+      status: isUp ? 'UP' : 'DEGRADED',
       service: grpcHealth.service_name,
       version: grpcHealth.version,
       uptimeSeconds: Number(grpcHealth.uptime_seconds),

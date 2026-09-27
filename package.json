@@ -1,0 +1,18 @@
+{
+  "name": "grpc-telemetry-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo connecting Node.js API Gateway to Python gRPC Data Cruncher via Protocol Buffers",
+  "scripts": {
+    "start:data-service": "./data-service/run.sh",
+    "start:gateway": "npm --prefix gateway run dev",
+    "test:gateway": "npm --prefix gateway test",
+    "test:data-service": "./data-service/.venv/bin/pytest data-service/test_server.py -v",
+    "test": "npm run test:data-service && npm run test:gateway",
+    "sparse:gateway": "./scripts/sparse.sh gateway",
+    "sparse:data-service": "./scripts/sparse.sh data-service",
+    "sparse:all": "./scripts/sparse.sh all",
+    "sparse:status": "./scripts/sparse.sh status"
+  },
+  "devDependencies": {}
+}
